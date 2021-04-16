@@ -1,5 +1,4 @@
-console.log("sth")
-
+const msg = "abc";
 
 const h0 = 0x6a09e667
 const h1 = 0xbb67ae85
@@ -21,36 +20,43 @@ const k = [
     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
     ];
 
-let input = "";
-let msg = Array.from(input).map((each) => each.charCodeAt(0));
-
 function padMsg(text){
-    const lenWithoutPad = text.length * 8 + 1 + 64;
-    const len = Math.ceil(lenWithoutPad/512) * 512;
+    const bitLenWithoutPad = text.length * 8 + 1 + 64;
+    const bitLen = Math.ceil(bitLenWithoutPad/512) * 512;
+    const byteLen = bitLen / 8;
 
-    const res = new ArrayBuffer(len);
+    const res = new ArrayBuffer(byteLen);
     let view = new DataView(res);
     let csr = 0;
     const textArr = Array.from(text).map(s => s.charCodeAt(0));
-    while (csr < text.length * 8) {
-        view.setUint8(csr, textArr[csr / 8]);
-        csr += 8;
+    while (csr < text.length) {
+        view.setUint8(csr, textArr[csr]);
+        csr += 1;
     }
-    csr = text.length * 8 + 1;
-    view.setUint8(csr++, 1, true); // set the next bit to 1
-    view.setUint32(len - 64 - 1, text.length * 8)
+    view.setUint8(csr++, 2**7); // set the next bit to 1
+    view.setUint32(byteLen - 1 - (32/8), text.length * 8); // should be 64bit but thats good enough
 
-    console.log("len", view.getUint32(0))
+    return res;
 }
 
-console.log(padMsg("abc"))
+function printBuffer(b) {
+    let res = ""
+    let csr = 0;
+    let view = new DataView(b)
+    while(csr < b.byteLength) {
+        res += view.getUint8(csr).toString(16)
+        res +=" "
+        csr++;
+    }
+    console.log(res)
+}
+
+let buffer = padMsg(msg);
+printBuffer(buffer)
+
+
+
 /*
-Pre-processing (Padding):
-begin with the original message of length L bits
-append a single '1' bit
-append K '0' bits, where K is the minimum number >= 0 such that L + 1 + K + 64 is a multiple of 512
-append L as a 64-bit big-endian integer, making the total post-processed length a multiple of 512 bits
-such that the bits in the message are L 1 00..<K 0's>..00 <L as 64 bit integer> = k*512 total bits
 
 Process the message in successive 512-bit chunks:
 break message into 512-bit chunks
