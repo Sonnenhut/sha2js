@@ -1,0 +1,9 @@
+{
+  "type": "module",
+  "name": "sha2js",
+  "main": "sha2.mjs",
+  "scripts": {
+    "test": "node test.js"
+  },
+  "license": "ISC"
+}
