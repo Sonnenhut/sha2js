@@ -66,7 +66,7 @@ class Sha2 {
 
             chunkOff += this.chunkSizeBytes;
         } while(chunkOff < buffer.byteLength);
-        return H.map(n => n.toString(16).padStart(8, '0')).join('');
+        return H.map(n => (n >>> 0 /* cast to unsigned */).toString(16).padStart(8, '0')).join('');
     }
 
     s0(v) { return this.rotr(v, 7) ^ this.rotr(v, 18) ^ (v >>> 3); }
