@@ -1,6 +1,8 @@
 ### SHA-2 implementation in javascript (not to be used in production)
 
-This is not intended to be used in production, just an implementation of the pseudocode from [wikipedia](https://en.wikipedia.org/wiki/SHA-2#Pseudocode).
+Test it out here: https://sonnenhut.github.io/sha2js/
+
+This is not intended to be used in production, just an example implementation of the pseudocode from [wikipedia](https://en.wikipedia.org/wiki/SHA-2#Pseudocode).
 
 Stuff I learned:
 
