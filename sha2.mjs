@@ -18,31 +18,45 @@ class Sha2 {
 
         let buffer = this.padMsg(msg);
         let chunkOff = 0;
+
+        let view = new DataView(buffer);
+        let data = [... Array(buffer.byteLength / this.wordSizeBytes).keys()].map(id => view.getUint32(id * this.wordSizeBytes, false));
+
+        console.log(data.map(n => (n >>> 0 /* cast to unsigned */).toString(16).padStart(8, '0')).join(' '))
         do {
-            let chunk = new DataView(buffer, chunkOff, this.chunkSizeBytes);
+            console.log("chunkoff", chunkOff, "datalen", data.length)
+            let chunk = data.slice(chunkOff, chunkOff + 16)
+            console.log("chunk", data.map(n => (n >>> 0 /* cast to unsigned */).toString(16).padStart(8, '0')).join(' '))
+            //let chunk = data.slice(chunkOffByte, this.chunkSizeBytes)
             let schedule = new ArrayBuffer(this.scheduleSize * this.wordSizeBytes); // 64 * 4-byte (32bit) words
             let scheduleView = new DataView(schedule);
 
-            const getw = (wordIdx) => scheduleView.getUint32(wordIdx * this.wordSizeBytes);
-            const setw = (wordIdx, v) => scheduleView.setUint32(wordIdx * this.wordSizeBytes, v);
+            let W = [...Array(this.scheduleSize).keys()];
+
+            //console.log(scheduleArr.map(n => n.toString(16)))
+            //this.printBuffer(scheduleView)
+            //return "a"
+
+            //
 
             // copy over the first 16 words
             [...Array(16).keys()]
-                .map(n => n * this.wordSizeBytes)
-                .forEach(byteIdx => scheduleView.setUint32(byteIdx, chunk.getUint32(byteIdx)));
+                //.map(n => n * this.wordSizeBytes)
+                //.forEach(byteIdx => W[byteIdx] =  chunk.getUint32(byteIdx * this.wordSizeBytes));
+                .forEach(byteIdx => W[byteIdx] =  chunk[byteIdx]);
 
             // expand
             for (let i = 16; i < this.scheduleSize; i++) {
-                const r = add(getw(i-16), this.s0(getw(i-15)), getw(i-7), this.s1(getw(i-2)));
-                setw(i, r)
+                W[i] = add(W[i-16], this.s0(W[i-15]), W[i-7], this.s1(W[i-2]));
             }
+            //console.log(W.map(n => (n >>> 0 /* cast to unsigned */).toString(16).padStart(8, '0')).join(' '));
 
             // run the main hashing
             let a,b,c,d,e,f,g,h;
             [a,b,c,d,e,f,g,h] = H;
             for (let t = 0; t < this.scheduleSize; t++) {
                 let ch = (e & f) ^ ((~e) & g);
-                let temp1 = h + this.S1(e) + ch + this.K[t] + getw(t);
+                let temp1 = h + this.S1(e) + ch + this.K[t] + W[t];
                 let maj = (a & b) ^ (a & c) ^ (b & c)
                 let temp2 = this.S0(a) + maj;
                 h = g;
@@ -55,17 +69,17 @@ class Sha2 {
                 a = add(temp1, temp2);
             }
 
-            H[0] = add(H[0], a);
-            H[1] = add(H[1], b);
-            H[2] = add(H[2], c);
-            H[3] = add(H[3], d);
-            H[4] = add(H[4], e);
-            H[5] = add(H[5], f);
-            H[6] = add(H[6], g);
-            H[7] = add(H[7], h);
+            H[0] = add(H[0], a) >>> 0;
+            H[1] = add(H[1], b) >>> 0;
+            H[2] = add(H[2], c) >>> 0;
+            H[3] = add(H[3], d) >>> 0;
+            H[4] = add(H[4], e) >>> 0;
+            H[5] = add(H[5], f) >>> 0;
+            H[6] = add(H[6], g) >>> 0;
+            H[7] = add(H[7], h) >>> 0;
 
-            chunkOff += this.chunkSizeBytes;
-        } while(chunkOff < buffer.byteLength);
+            chunkOff += 16
+        } while(chunkOff < data.length);
         return H.map(n => (n >>> 0 /* cast to unsigned */).toString(16).padStart(8, '0')).join('');
     }
 
@@ -89,6 +103,19 @@ class Sha2 {
         view.setBigUint64(byteLen - 8, 8n * BigInt(text.length));
 
         return res;
+    }
+
+    // utility fn
+    printBuffer(b, radix = 16) {
+        let res = ""
+        let csr = 0;
+        let view = b instanceof DataView ? b : new DataView(b);
+        while(csr < b.byteLength) {
+            res += view.getUint32(csr).toString(radix).padStart(8, '0');
+            res += " "
+            csr += 4;
+        }
+        console.log(res)
     }
 }
 
