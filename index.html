@@ -1,0 +1,41 @@
+<!doctype html>
+<html>
+    <head>
+        <title>Sha2</title>
+        <script type="module">
+            import * as sha2 from "./sha2.mjs";
+
+            function hash() {
+                const input = document.getElementById("textinput").value;
+                const algoname = document.getElementById("algo").value;
+                document.getElementById("output").value = sha2[algoname].hash(input);
+            }
+
+            window.onload = () => {
+                document.getElementById("textinput").onkeyup = hash;
+                document.getElementById("algo").onchange = hash;
+            }
+        </script>
+        <style>
+            html, body { height: 100% }
+            body {
+                display: flex;
+                justify-content: center;
+                align-items: center;
+            }
+        </style>
+    </head>
+
+    <body>
+        <section>
+            <select id="algo">
+                <option value="Sha256">Sha256</option>
+                <option value="Sha224">Sha224</option>
+                <option value="Sha512">Sha512</option>
+            </select>
+            <input id="textinput" type="text" placeholder="Your text...">
+            <br>
+            <textarea id="output" cols="50" rows="3" placeholder="Output..."></textarea>
+        </section>
+    </body>
+</html>
