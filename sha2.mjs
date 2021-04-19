@@ -55,7 +55,7 @@ class Sha2 {
 
             chunkOff += this.chunkWords;
         } while(chunkOff < data.length);
-        return H.map(n => n.toString(16).padStart(this.wordSizeBits / 4, '0')).join('');
+        return H;
     }
 
     // -- methods must be supplied by implementations
@@ -81,25 +81,29 @@ class Sha2X extends Sha2 {
                     0x748f82ee, 0x78a5636f, 0x84c87814, 0x8cc70208, 0x90befffa, 0xa4506ceb, 0xbef9a3f7, 0xc67178f2
                 ];
         super({
-            initialH: h.map(n => BigInt(n)),
-            K: K.map(n => BigInt(n)),
+            initialH: h,
+            K: K,
             chunkSizeBits: 512,
             wordSizeBits: 32,
             scheduleSize: 64
         });
     }
+    hash(msg) {
+        return super.hash(msg)
+            .map(n => (n >>> 0 /*typecast to uint*/).toString(16).padStart(8, '0')).join('');
+    }
 
-    s0(v) { return this.rotr(v, 7n) ^ this.rotr(v, 18n) ^ (v >> 3n); }
-    s1(v) { return this.rotr(v, 17n) ^ this.rotr(v, 19n) ^ (v >> 10n); }
+    s0(v) { return this.rotr(v, 7) ^ this.rotr(v, 18) ^ (v >>> 3); }
+    s1(v) { return this.rotr(v, 17) ^ this.rotr(v, 19) ^ (v >>> 10); }
 
-    S0(v) { return this.rotr(v, 2n) ^ this.rotr(v,13n) ^ this.rotr(v, 22n); }
-    S1(v) { return this.rotr(v, 6n) ^ this.rotr(v, 11n) ^ this.rotr(v, 25n); }
-    rotr(value, count) { return (value >> count) | (value << (BigInt(this.wordSizeBits) - count)); }
+    S0(v) { return this.rotr(v, 2) ^ this.rotr(v,13) ^ this.rotr(v, 22); }
+    S1(v) { return this.rotr(v, 6) ^ this.rotr(v, 11) ^ this.rotr(v, 25); }
+    rotr(value, count) { return (value >>> count) | (value << (this.wordSizeBits - count)); }
 
     add(o1, o2, o3, o4, o5) {
         return [o1, o2, o3, o4, o5]
             .filter(n => n) // only truthy values
-            .reduce((acc, next) => (acc + next) % 2n**32n, 0n); // addition with modulo 2^32
+            .reduce((acc, next) => (acc + next) % 2**this.wordSizeBits, 0); // addition with modulo 2^32
     }
     padMsg(text) {
         const bitLenWithoutPad = text.length * 8 + 1 + 64;
@@ -113,8 +117,7 @@ class Sha2X extends Sha2 {
         view.setBigUint64(byteLen - 8, 8n * BigInt(text.length));
 
         return [... Array(byteLen / 4).keys()]
-            .map(id => view.getUint32(id * 4, false))
-            .map(n => BigInt(n));
+            .map(id => view.getUint32(id * 4, false));
     }
 
 /*
@@ -179,6 +182,10 @@ class Sha512 extends Sha2 {
 
         this.wordSizeBitsN = 64n;
     }
+    hash(msg) {
+        return super.hash(msg).map(n => n.toString(16).padStart(16, '0')).join('');
+    }
+
     s0(v) { return this.rotr(v, 1n) ^ this.rotr(v, 8n) ^ (v >> 7n); }
     s1(v) { return this.rotr(v, 19n) ^ this.rotr(v, 61n) ^ (v >> 6n); }
 
